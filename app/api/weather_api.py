@@ -1,4 +1,11 @@
 import requests
+from requests.exceptions import (
+    HTTPError,
+    ConnectionError,
+    Timeout,
+    RequestException,
+)
+from app.models.weather_data import WeatherData
 from config.settings import(WEATHER_API_KEY, BASE_URL, REQUEST_TIMEOUT)
 
 
@@ -26,9 +33,39 @@ class WeatherService:
 
 
     def send_request(self,url , parameters):
-        response = requests.get(url, params=parameters, timeout=self.timeout)
-        response.raise_for_status()
-        return response
+
+        try:
+            response = requests.get(url, params=parameters, timeout=self.timeout)
+            response.raise_for_status()
+            return response
+
+        except Timeout:
+            raise Exception("Connection request timed out")
+
+        except ConnectionError:
+            raise Exception("Unable to connect to server")
+
+        except HTTPError as error:
+
+            raise Exception(
+                f"Weather API returned an error: {error}"
+            )
+
+        except RequestException as error:
+
+            raise Exception(
+                f"Unexpected request error: {error}"
+            )
 
     def parse_response(self,response):
-        return response.json()
+        data = response.json()
+        location = data["location"]
+        current = data["current"]
+        return WeatherData(
+            city=location["name"],
+            country=location["country"],
+            temperature=current["temp_c"],
+            humidity=current["humidity"],
+            wind_speed=current["wind_kph"],
+            condition=current["condition"]["text"]
+        )
