@@ -6,6 +6,11 @@ from requests.exceptions import (
     RequestException,
 )
 from app.models.weather_data import WeatherData
+from app.exceptions.weather_exceptions import (
+    WeatherAPIError,
+    WeatherConnectionError,
+    WeatherTimeoutError,
+)
 from config.settings import(WEATHER_API_KEY, BASE_URL, REQUEST_TIMEOUT)
 
 
@@ -39,17 +44,18 @@ class WeatherService:
             response.raise_for_status()
             return response
 
-        except Timeout:
-            raise Exception("Connection request timed out")
+        except Timeout as error:
+            raise WeatherTimeoutError(
+                "The request timed out."
+            ) from error
 
-        except ConnectionError:
-            raise Exception("Unable to connect to server")
+        except ConnectionError as error:
+            raise WeatherConnectionError("Unable to connect to server") from error
 
         except HTTPError as error:
-
-            raise Exception(
+            raise WeatherAPIError(
                 f"Weather API returned an error: {error}"
-            )
+            ) from error
 
         except RequestException as error:
 

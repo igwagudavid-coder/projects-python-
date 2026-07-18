@@ -1,4 +1,5 @@
 from app.api.weather_api import WeatherService
+from app.exceptions.weather_exceptions import WeatherServiceError
 from app.utils.logger import setup_logger
 from config.settings import DEFAULT_CITY
 from app.utils.formatters import WeatherFormatter
@@ -22,11 +23,10 @@ def main():
             )
         )
 
-    except Exception as error:
-
+    except WeatherServiceError as error:
         logger.error(error)
-
         print(error)
+        
 
 if __name__ == "__main__":
     main()
